@@ -2,35 +2,41 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../Navbar/Navbar";
 import { motion } from "framer-motion";
 import { FaSearch, FaFilter, FaEdit, FaTrash } from "react-icons/fa";
+import axios from 'axios'
 
 const ViewBook = () => {
   const [books, setBooks] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null)
   const [filters, setFilters] = useState({ bookId: "", bookName: "", genre: "", author: "", ratings: "" });
   const booksPerPage = 10;
 
   useEffect(() => {
-    const fetchedBooks = Array.from({ length: 50 }, (_, i) => ({
-      bookId: `BID${i + 1}`,
-      bookName: `Book ${i + 1}`,
-      genre: ["Fiction", "Non-fiction", "Sci-Fi", "Mystery", "Biography"][i % 5],
-      author: "Author " + (i + 1),
-      ratings: Math.floor(Math.random() * 5) + 1,
-      quantity: Math.floor(Math.random() * 20) + 1,
-    }));
-    setBooks(fetchedBooks);
+    const fetchBooks = async () => {
+      console.log("Fetched books data:");
+      try {
+        const response = await axios.get('http://localhost:8080/Book/get-books');
+        console.log("Fetched books data:", response.data);
+        setBooks(response.data);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+      }
+    };
+
+    fetchBooks();
   }, []);
 
   const filteredBooks = books.filter((book) =>
     Object.keys(filters).every((key) =>
-      filters[key] ? book[key].toString().toLowerCase().includes(filters[key].toString().toLowerCase()) : true
+      filters[key] ? (book[key] ? book[key].toString().toLowerCase().includes(filters[key].toString().toLowerCase()) : false) : true
     )
   );
 
   const searchedBooks = filteredBooks.filter((book) =>
-    book.bookName.toLowerCase().includes(searchTerm.toLowerCase())
+    book.bookTitle.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const indexOfLastBook = currentPage * booksPerPage;
@@ -39,9 +45,142 @@ const ViewBook = () => {
 
   const totalPages = Math.ceil(searchedBooks.length / booksPerPage);
 
-  const handleDelete = (bookId) => {
-    setBooks(books.filter((book) => book.bookId !== bookId));
+  const handleDelete = async (bookId) => {
+    try {
+      await axios.delete(`http://localhost:8080/Book/delete-book/by-Id/${bookId}`);
+      setBooks(books.filter((book) => book.bookId !== bookId));
+    }catch(error){
+      console.log(error);
+    }
+    
   };
+
+  const handleUpdate = (book) => {
+    setSelectedBook(book);
+    setIsPopupOpen(true);
+  };
+ 
+ 
+  const handleUpdateQuantity = (bookId, newQuantity) => {
+    setBooks(books.map(book => book.bookId === bookId ? { ...book, quantity: newQuantity } : book));
+  };
+ 
+  const handleClosePopup = () => {
+    setIsPopupOpen(false);
+    setSelectedBook(null);
+  };
+ 
+  // Add the UpdateQuantityPopup component
+// const UpdateQuantityPopup = ({ isOpen, onClose, book, onUpdate }) => {
+//   const [quantity, setQuantity] = useState(book ? book.quantity : 0);
+ 
+//   const handleQuantityChange = (e) => {
+//     setQuantity(e.target.value);
+//   };
+ 
+//   const handleSubmit = async () => {
+//     console.log(typeof(quantity));
+//     try {
+//       const response = await axios.put(`http://localhost:8080/Book/update-book/update-quantity/${book.bookId}`, quantity);
+//       if (response.status === 200) {
+//         console.log('Quantity updated successfully');
+//         onUpdate(book.bookId,quantity);
+//       } else {
+//         console.error('Failed to update quantity');
+//       }
+//     }catch(error){
+//       console.log(error);
+//     }
+
+//     // onUpdate(book.bookId, quantity);
+//     onClose();
+//   };
+ 
+//   if (!isOpen) return null;
+
+//   return (
+//     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+//       <div className="bg-white p-6 rounded-lg shadow-lg">
+//         <h3 className="text-lg font-semibold mb-4">Update Quantity</h3>
+//         <input
+//           type="number"
+//           value={quantity}
+//           onChange={handleQuantityChange}
+//           className="w-full p-2 border rounded mb-4"
+//         />
+//         <div className="flex justify-end space-x-2">
+//           <button onClick={handleSubmit} className="px-4 py-2 bg-blue-500 text-white rounded">Update</button>
+//           <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+const UpdateQuantityPopup = ({ isOpen, onClose, book, onUpdate }) => {
+  const [quantity, setQuantity] = useState(book ? book.quantity : 0);
+
+  const handleQuantityChange = (e) => {
+    setQuantity(parseInt(e.target.value) || 0); // Convert to integer, default to 0 if invalid
+  };
+
+  const handleSubmit = async () => {
+    const updatedQuantity = parseInt(quantity); // Ensure it's an integer
+
+    if (isNaN(updatedQuantity)) {
+      console.error("Invalid quantity entered");
+      return;
+    }
+
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/Book/update-book/update-quantity/${book.bookId}`,
+        updatedQuantity,
+        {
+          headers: { "Content-Type": "application/json" }, // Ensure JSON format
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Quantity updated successfully");
+        onUpdate(book.bookId, updatedQuantity);
+      } else {
+        console.error("Failed to update quantity");
+      }
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+    }
+
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <h3 className="text-lg font-semibold mb-4">Update Quantity</h3>
+        <input
+          type="number"
+          value={quantity}
+          onChange={handleQuantityChange}
+          className="w-full p-2 border rounded mb-4"
+        />
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            Update
+          </button>
+          <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
   return (
     <div className="flex max-h-screen bg-gray-100">
@@ -98,6 +237,7 @@ const ViewBook = () => {
                   <th className="p-3">Genre</th>
                   <th className="p-3">Author</th>
                   <th className="p-3">Ratings</th>
+                  <th className="p-3">Quantity</th>
                   <th className="p-3">Actions</th>
                 </tr>
               </thead>
@@ -105,12 +245,13 @@ const ViewBook = () => {
                 {currentBooks.map((book) => (
                   <tr key={book.bookId} className="border-b  text-center">
                     <td className="p-3">{book.bookId}</td>
-                    <td className="p-3">{book.bookName}</td>
+                    <td className="p-3">{book.bookTitle}</td>
                     <td className="p-3">{book.genre}</td>
-                    <td className="p-3">{book.author}</td>
+                    <td className="p-3">{book.authorName}</td>
                     <td className="p-3">{book.ratings}</td>
+                    <td className="p-3">{book.quantity}</td>
                     <td className="p-3 flex gap-3  text-center ml-8">
-                      <FaEdit className="text-blue-600 cursor-pointer" />
+                      <FaEdit className="text-blue-600 cursor-pointer" onClick={() => handleUpdate(book)}/>
                       <FaTrash className="text-red-600 cursor-pointer" onClick={() => handleDelete(book.bookId)} />
                     </td>
                   </tr>
@@ -135,6 +276,13 @@ const ViewBook = () => {
           </div>
         </div>
       </div>
+      <UpdateQuantityPopup
+        isOpen={isPopupOpen}
+        onClose={handleClosePopup}
+        book={selectedBook}
+        onUpdate={handleUpdateQuantity}
+      />
+ 
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 export default function LandingPage() {
     const navigate = useNavigate();
   return (
-    <div className="max-h-screen bg-gradient-to-br from-[#180161] to-[#4F1787] text-white flex flex-col items-center justify-center p-6 md:p-12 text-center">
+    <div className="min-h-screen bg-gradient-to-br from-[#180161] to-[#4F1787] text-white flex flex-col items-center justify-center p-6 md:p-12 text-center">
       {/* Hero Section */}
       <motion.h1
         initial={{ opacity: 0, y: -50 }}

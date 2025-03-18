@@ -15,21 +15,25 @@ import {
 } from "recharts";
 import { Search, User } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from 'axios'
 
-const bookData = [
-  { month: "Jan", books: 30 },
-  { month: "Feb", books: 45 },
-  { month: "Mar", books: 20 },
-  { month: "Apr", books: 50 },
-  { month: "May", books: 60 },
-  { month: "Jun", books: 80 },
-  { month: "Jul", books: 75 },
-  { month: "Aug", books: 55 },
-  { month: "Sep", books: 40 },
-  { month: "Oct", books: 70 },
-  { month: "Nov", books: 90 },
-  { month: "Dec", books: 100 },
-];
+const months = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+
+const fetchMonthlyData = async () => {
+  const bookData = [];
+  for (const month of months) {
+    try {
+      console.log(bookData)
+      const response = await axios.get(`http://localhost:8080/issueBook/monthly-count/${month}`);
+      bookData.push({ month, books: response.data });
+    } catch (error) {
+      console.error(`Error fetching data for ${month}:`, error);
+    }
+  }
+  return bookData;
+};
+
 
 const genreData = [
   { name: "Fiction", value: 400 },
@@ -80,6 +84,16 @@ const navigate = useNavigate();
 const handleProfileClick = () => {
     navigate("/profile");
 }
+
+  const [bookData, setBookData] = useState([]);
+  useEffect(() => {
+    const getData = async () => {
+      const data = await fetchMonthlyData();
+      setBookData(data);
+    };
+    getData();
+  }, []);
+
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {/* Sidebar */}
@@ -104,17 +118,17 @@ const handleProfileClick = () => {
         <div className="grid grid-cols-3 gap-4">
           {/* Bar Chart (Books Borrowed) */}
           <div className="bg-white p-4 rounded-lg shadow-md col-span-2 h-[270px]">
-            <h2 className="text-md font-semibold mb-2">Books Borrowed (Last 12 Months)</h2>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={bookData}>
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="books" fill="#EB3678" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+      <h2 className="text-md font-semibold mb-2">Books Borrowed (Last 12 Months)</h2>
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={bookData}>
+          <XAxis dataKey="month" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="books" fill="#EB3678" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
 
           {/* Genre Distribution Pie Chart */}
           <div className="bg-white p-4 rounded-lg shadow-md h-[250px]">

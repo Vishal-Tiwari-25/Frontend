@@ -1,15 +1,17 @@
+
 import React, { useState } from "react";
 import Navbar from "../Navbar/Navbar";
 import { motion } from "framer-motion";
-
+import axios from 'axios'
+ 
 const LibraryUnlockAnimation = ({ progress }) => {
   const openAmount = progress * 20; // Adjust the opening effect
-
+ 
   return (
     <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Library Base */}
       <rect x="50" y="50" width="100" height="100" fill="#8B5CF6" stroke="black" strokeWidth="3" rx="5" />
-      
+     
       {/* Locked Door */}
       <motion.rect
         x="90"
@@ -23,7 +25,7 @@ const LibraryUnlockAnimation = ({ progress }) => {
         animate={{ x: -openAmount }}
         transition={{ duration: 0.5 }}
       />
-      
+     
       {/* Right Door */}
       <motion.rect
         x="90"
@@ -40,7 +42,7 @@ const LibraryUnlockAnimation = ({ progress }) => {
     </svg>
   );
 };
-
+ 
 const AddUser = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -49,31 +51,36 @@ const AddUser = () => {
     gender: "",
     dob: "",
   });
-
+ 
   const filledFields = Object.values(formData).filter((value) => value !== "").length;
   const progress = filledFields / Object.keys(formData).length;
-
+ 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
-  const handleSubmit = (e) => {
+ 
+  const handleSubmit = async (e) =>{
     e.preventDefault();
-    console.log("User Data Submitted:", formData);
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      gender: "",
-      dob: "",
-    });
-  };
-
+    try {
+      const response = await axios.post("http://localhost:8080/Users/add-user", formData);
+      console.log('User data submitted: ', response.data);
+      setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          gender: "",
+          dob: "",
+      })
+    }catch(error){
+      console.log("error submiting form: ", error);
+    }
+  }
+ 
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar on the left */}
       <Navbar />
-
+ 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="flex items-center space-x-12">
@@ -86,7 +93,7 @@ const AddUser = () => {
             className="w-full max-w-lg space-y-4 bg-white p-6 rounded-lg shadow-lg"
           >
             <h2 className="text-2xl font-bold text-gray-800">Add New User</h2>
-
+ 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <motion.div whileHover={{ scale: 1.05 }}>
                 <label className="block text-sm font-medium text-gray-700">Name</label>
@@ -99,7 +106,7 @@ const AddUser = () => {
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </motion.div>
-
+ 
               <motion.div whileHover={{ scale: 1.05 }}>
                 <label className="block text-sm font-medium text-gray-700">Email</label>
                 <input
@@ -112,7 +119,7 @@ const AddUser = () => {
                 />
               </motion.div>
             </div>
-
+ 
             <motion.div whileHover={{ scale: 1.05 }}>
               <label className="block text-sm font-medium text-gray-700">Phone Number</label>
               <input
@@ -124,7 +131,7 @@ const AddUser = () => {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
               />
             </motion.div>
-
+ 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <motion.div whileHover={{ scale: 1.05 }}>
                 <label className="block text-sm font-medium text-gray-700">Gender</label>
@@ -141,7 +148,7 @@ const AddUser = () => {
                   <option value="Other">Other</option>
                 </select>
               </motion.div>
-
+ 
               <motion.div whileHover={{ scale: 1.05 }}>
                 <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
                 <input
@@ -154,7 +161,7 @@ const AddUser = () => {
                 />
               </motion.div>
             </div>
-
+ 
             <motion.button
               type="submit"
               whileHover={{ scale: 1.05 }}
@@ -163,7 +170,7 @@ const AddUser = () => {
               Add User
             </motion.button>
           </motion.form>
-
+ 
           {/* Animated Library SVG */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
@@ -178,5 +185,5 @@ const AddUser = () => {
     </div>
   );
 };
-
+ 
 export default AddUser;

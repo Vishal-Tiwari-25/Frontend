@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Navbar from "../Navbar/Navbar";
 import { motion } from "framer-motion";
 import { FaEdit, FaTrash, FaBook, FaMoneyBill, FaTimes, FaFilter } from "react-icons/fa";
@@ -8,31 +10,78 @@ const ViewUser = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filters, setFilters] = useState({ userId: "", userName: "", email: "", phone: "" });
+  const [filters, setFilters] = useState({ userId: "", name: "", email: "", phone: "" });
   const [selectedUser, setSelectedUser] = useState(null);
   const [finePopup, setFinePopup] = useState(false);
+  const [updatePopup, setUpdatePopup] = useState(false);
   const usersPerPage = 10;
 
   useEffect(() => {
-    const fetchedUsers = Array.from({ length: 50 }, (_, i) => ({
-      userId: `UID${i + 1}`,
-      userName: `User ${i + 1}`,
-      email: `user${i + 1}@mail.com`,
-      phone: `98765432${i % 10}`,
-      booksIssued: Math.floor(Math.random() * 5),
-      fine: Math.random() > 0.5 ? (Math.floor(Math.random() * 500) + 50) : 0, // Random fine
-    }));
-    setUsers(fetchedUsers);
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/Users/get-users"); // Replace with your API endpoint
+        console.log("Fetched users data:", response.data);
+        setUsers(response.data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
   }, []);
+
+  const handleUpdate = async (userId) => {
+    console.log(`fetching details for user: ${userId}`);
+    try{
+      const response = await axios.get(`http://localhost:8080/Users/get-users/by-id/${userId}`)
+      console.log("fetched user's data: ", response.data);
+      setSelectedUser(users.find(user => user.userId === userId));
+      setUpdatePopup(true);
+    }catch(error){
+      console.log(error);
+    }
+
+  }
+
+  // const handleSaveUpdate = async (userId) => {
+  //   console.log(`Saving updated user details: ${userId}`, selectedUser);
+
+  //   try{
+  //     const response = await axios.put(`http://localhost:8080/Users/update-user/${userId}`)
+  //     console.log("Updated data: ", response.data)
+  //     setUpdatePopup(false);
+  //   }catch(error){
+  //     console.log(error);
+  //   }
+    
+  // }
+
+  const handleSaveUpdate = async (userId) => {
+    console.log(`Saving updated user details: ${userId}`, selectedUser);
+  
+    try {
+      const response = await axios.put(`http://localhost:8080/Users/update-user/${userId}`, {
+        name: selectedUser.name,
+        email: selectedUser.email,
+        phone: selectedUser.phone,
+        dob: selectedUser.dob,
+        gender: selectedUser.gender
+      });
+      console.log("Updated data: ", response.data);
+      setUpdatePopup(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const filteredUsers = users.filter((user) =>
     Object.keys(filters).every((key) =>
-      filters[key] ? user[key].toString().toLowerCase().includes(filters[key].toString().toLowerCase()) : true
+      filters[key] ? user[key]?.toString().toLowerCase().includes(filters[key].toString().toLowerCase()) : true
     )
   );
 
   const searchedUsers = filteredUsers.filter((user) =>
-    user.userName.toLowerCase().includes(searchTerm.toLowerCase())
+    user.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const indexOfLastUser = currentPage * usersPerPage;
@@ -41,8 +90,13 @@ const ViewUser = () => {
 
   const totalPages = Math.ceil(searchedUsers.length / usersPerPage);
 
-  const handleDelete = (userId) => {
-    setUsers(users.filter((user) => user.userId !== userId));
+  const handleDelete = async (userId) => {
+    try {
+      await axios.delete(`http://localhost:8080/Users/delete-user/${userId}`); // Replace with your API endpoint
+      setUsers(users.filter((user) => user.userId !== userId));
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
   };
 
   return (
@@ -57,40 +111,31 @@ const ViewUser = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-2/3 px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
           />
-          {/* <motion.div whileHover={{ scale: 1.1 }}>
-            <button
-              className="px-4 py-2 bg-indigo-500 text-white rounded-md"
-              onClick={() => setFilterOpen(!filterOpen)}
-            >
-              Filter
-            </button>
-          </motion.div> */}
-
           <motion.div whileHover={{ scale: 1.1 }}>
             <button
               className="px-4 py-2 text-indigo-500 rounded-md flex items-center justify-center"
               onClick={() => setFilterOpen(!filterOpen)}
             >
-              <FaFilter size={20}/>
+              <FaFilter size={20} />
               <span>Filter</span>
             </button>
           </motion.div>
         </div>
 
-        {filterOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute bg-white p-4 shadow-lg rounded-md top-16 left-0 right-0 z-10"
-          >
-            <div className="grid grid-cols-3 gap-4">
-              <input type="text" placeholder="User ID" className="p-2 border rounded" onChange={(e) => setFilters({ ...filters, userId: e.target.value })} />
-              <input type="text" placeholder="User Name" className="p-2 border rounded" onChange={(e) => setFilters({ ...filters, userName: e.target.value })} />
-              <input type="text" placeholder="Email" className="p-2 border rounded" onChange={(e) => setFilters({ ...filters, email: e.target.value })} />
-              <input type="text" placeholder="Phone No." className="p-2 border rounded" onChange={(e) => setFilters({ ...filters, phone: e.target.value })} />
-            </div>
-          </motion.div>
-        )}
+       {filterOpen && (
+           <motion.div
+             initial={{ opacity: 0, y: -10 }}
+             animate={{ opacity: 1, y: 0 }}
+             className="absolute bg-white p-4 shadow-lg rounded-md top-16 left-0 right-0 z-10"
+           >
+             <div className="grid grid-cols-3 gap-4">
+               <input type="text" placeholder="User ID" className="p-2 border rounded" onChange={(e) => setFilters({ ...filters, userId: e.target.value })} />
+               <input type="text" placeholder="User Name" className="p-2 border rounded" onChange={(e) => setFilters({ ...filters, userName: e.target.value })} />
+               <input type="text" placeholder="Email" className="p-2 border rounded" onChange={(e) => setFilters({ ...filters, email: e.target.value })} />
+               <input type="text" placeholder="Phone No." className="p-2 border rounded" onChange={(e) => setFilters({ ...filters, phone: e.target.value })} />
+             </div>
+           </motion.div>
+         )} 
 
         <div className="overflow-hidden">
           <div className="h-[400px] overflow-y-auto">
@@ -101,7 +146,6 @@ const ViewUser = () => {
                   <th className="p-3">User Name</th>
                   <th className="p-3">Email</th>
                   <th className="p-3">Phone No.</th>
-                  <th className="p-3">Books Issued</th>
                   <th className="p-3">Actions</th>
                 </tr>
               </thead>
@@ -109,14 +153,13 @@ const ViewUser = () => {
                 {currentUsers.map((user) => (
                   <tr key={user.userId} className="border-b text-center">
                     <td className="p-3">{user.userId}</td>
-                    <td className="p-3">{user.userName}</td>
+                    <td className="p-3">{user.name}</td>
                     <td className="p-3">{user.email}</td>
                     <td className="p-3">{user.phone}</td>
-                    <td className="p-3">{user.booksIssued}</td>
                     <td className="p-3 flex gap-3 ml-6">
-                      <FaEdit className="text-blue-600 cursor-pointer" />
+                      <FaEdit className="text-blue-600 cursor-pointer" onClick={() => handleUpdate(user.userId)}/>
                       <FaTrash className="text-red-600 cursor-pointer" onClick={() => handleDelete(user.userId)} />
-                      <FaBook className="text-green-600 cursor-pointer" />
+                      {/* <FaBook className="text-green-600 cursor-pointer" /> */}
                       <FaMoneyBill
                         className="text-yellow-600 cursor-pointer"
                         onClick={() => {
@@ -130,6 +173,24 @@ const ViewUser = () => {
               </tbody>
             </table>
           </div>
+          
+
+        {/*Update popup */}
+              {updatePopup && selectedUser && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                  <div className="bg-white p-6 rounded-md shadow-lg relative w-96">
+                  <FaTimes className="absolute top-3 right-3 text-gray-600 cursor-pointer" onClick={() => setUpdatePopup(false)} />
+                    <h2 className="text-lg font-semibold mb-4">Update User</h2>
+                    <input type="text" value={selectedUser.name} className="w-full p-2 border rounded mb-2" onChange={(e) => setSelectedUser({ ...selectedUser, name: e.target.value })} />
+                    <input type="email" value={selectedUser.email} className="w-full p-2 border rounded mb-2" onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })} />
+                    <input type="text" value={selectedUser.phone} className="w-full p-2 border rounded mb-2" onChange={(e) => setSelectedUser({ ...selectedUser, phone: e.target.value })} />
+                    <input type="text" value={selectedUser.dob} className="w-full p-2 border rounded mb-2" onChange={(e) => setSelectedUser({ ...selectedUser, dob: e.target.value })} />
+                    <input type="text" value={selectedUser.gender} className="w-full p-2 border rounded mb-2" onChange={(e) => setSelectedUser({ ...selectedUser, gender: e.target.value })} />
+                    <button className="bg-indigo-500 text-white px-4 py-2 rounded" onClick={()=> handleSaveUpdate(selectedUser.userId)}>Save</button>
+                  </div>
+                </div>
+              )}
+ 
 
           {/* Pagination */}
           <div className="flex justify-center mt-4 space-x-2">
@@ -159,7 +220,7 @@ const ViewUser = () => {
             {selectedUser.fine > 0 ? (
               <>
                 <h2 className="text-lg font-semibold mb-4">Outstanding Fine</h2>
-                <p className="text-gray-700">User <strong>{selectedUser.userName}</strong> has a pending fine of:</p>
+                <p className="text-gray-700">User <strong>{selectedUser.name}</strong> has a pending fine of:</p>
                 <p className="text-red-600 text-2xl font-bold">₹{selectedUser.fine}</p>
                 <button className="mt-4 bg-indigo-500 text-white px-4 py-2 rounded">Pay Fine</button>
               </>
