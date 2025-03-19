@@ -16,6 +16,8 @@ const ViewUser = () => {
   const [updatePopup, setUpdatePopup] = useState(false);
   const usersPerPage = 10;
 
+
+  //fetching all users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -42,19 +44,6 @@ const ViewUser = () => {
     }
 
   }
-
-  // const handleSaveUpdate = async (userId) => {
-  //   console.log(`Saving updated user details: ${userId}`, selectedUser);
-
-  //   try{
-  //     const response = await axios.put(`http://localhost:8080/Users/update-user/${userId}`)
-  //     console.log("Updated data: ", response.data)
-  //     setUpdatePopup(false);
-  //   }catch(error){
-  //     console.log(error);
-  //   }
-    
-  // }
 
   const handleSaveUpdate = async (userId) => {
     console.log(`Saving updated user details: ${userId}`, selectedUser);
@@ -98,6 +87,26 @@ const ViewUser = () => {
       console.error("Error deleting user:", error);
     }
   };
+
+  //handle fine by userid
+  // const [fineAmount, setFineAmount] = useState(null);
+  // // useEffect(() => {
+  // //   if (selectedUser) {
+  // //     axios.get(`http://localhost:8080/fines/unpaid/${selectedUser.userId}`)
+  // //       .then(response => setFineAmount(response.data.amount))
+  // //       .catch(error => console.error('Error fetching fine:', error));
+  // //   }
+  // // }, [selectedUser])
+
+  // useEffect(() => {
+  //   if (selectedUser) {
+  //     axios.get(`http://localhost:8080/fines/unpaid/${selectedUser.userId}`)
+  //       .then(response => setFineAmount(response.data.amount)) // Correct state update
+  //       .catch(error => console.error('Error fetching fine:', error));
+  //   }
+  // }, [selectedUser]);
+  
+
 
   return (
     <div className="flex max-h-screen bg-gray-100">
@@ -160,13 +169,13 @@ const ViewUser = () => {
                       <FaEdit className="text-blue-600 cursor-pointer" onClick={() => handleUpdate(user.userId)}/>
                       <FaTrash className="text-red-600 cursor-pointer" onClick={() => handleDelete(user.userId)} />
                       {/* <FaBook className="text-green-600 cursor-pointer" /> */}
-                      <FaMoneyBill
+                      {/* <FaMoneyBill
                         className="text-yellow-600 cursor-pointer"
                         onClick={() => {
                           setSelectedUser(user);
                           setFinePopup(true);
                         }}
-                      />
+                      /> */}
                     </td>
                   </tr>
                 ))}
@@ -209,29 +218,50 @@ const ViewUser = () => {
         </div>
       </div>
 
-      {/* Fine Modal */}
-      {finePopup && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-md shadow-lg relative w-96">
-            <FaTimes
-              className="absolute top-3 right-3 text-gray-600 cursor-pointer"
-              onClick={() => setFinePopup(false)}
-            />
-            {selectedUser.fine > 0 ? (
-              <>
-                <h2 className="text-lg font-semibold mb-4">Outstanding Fine</h2>
-                <p className="text-gray-700">User <strong>{selectedUser.name}</strong> has a pending fine of:</p>
-                <p className="text-red-600 text-2xl font-bold">₹{selectedUser.fine}</p>
-                <button className="mt-4 bg-indigo-500 text-white px-4 py-2 rounded">Pay Fine</button>
-              </>
-            ) : (
-              <p className="text-green-600 text-lg font-semibold flex items-center">
-                No fine! 😊 You can issue another book.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+      {/* {finePopup && selectedUser && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+              <div className="bg-white p-6 rounded-md shadow-lg relative w-96">
+                <FaTimes
+                  className="absolute top-3 right-3 text-gray-600 cursor-pointer"
+                  onClick={() => setFinePopup(false)}
+                />
+                {fineAmount !== null ? (
+                  fineAmount > 0 ? (
+                    <>
+                      <h2 className="text-lg font-semibold mb-4">Outstanding Fine</h2>
+                      <p className="text-gray-700">User <strong>{selectedUser.name}</strong> has a pending fine of:</p>
+                      <p className="text-red-600 text-2xl font-bold">₹{selectedUser.amount}</p>
+                      <button className="mt-4 bg-indigo-500 text-white px-4 py-2 rounded">Pay Fine</button>
+                    </>
+                  ) : (
+                    <p className="text-green-600 text-lg font-semibold flex items-center">
+                      No fine! 😊 You can issue another book.
+                    </p>
+                  )
+                ) : (
+                  <p>Loading...</p>
+                )}
+              </div>
+            </div>
+          )
+      }; */}
+
+      {/* {fineAmount !== null ? (
+        fineAmount > 0 ? (
+          <>
+            <h2 className="text-lg font-semibold mb-4">Outstanding Fine</h2>
+            <p className="text-gray-700">User <strong>{selectedUser.name}</strong> has a pending fine of:</p>
+            <p className="text-red-600 text-2xl font-bold">₹{fineAmount}</p>  
+            <button className="mt-4 bg-indigo-500 text-white px-4 py-2 rounded">Pay Fine</button>
+          </>
+        ) : (
+          <p className="text-green-600 text-lg font-semibold flex items-center">
+            No fine! 😊 You can issue another book.
+          </p>
+        )
+      ) : (
+        <p>Loading...</p>
+      )} */}
     </div>
   );
 };

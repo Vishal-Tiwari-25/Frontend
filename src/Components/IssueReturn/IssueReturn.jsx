@@ -49,14 +49,14 @@
 //     try {
 //       // Replace with your actual API endpoint
 //       const response = await axios.get(`/api/check-fine/${userId}`);
-//       const existingFine = response.data.fineAmount;
+//       const existingFine = response.data.amount;
 
 //       if (isDamaged) {
-//         const fineAmount = parseFloat(enteredFine);
-//         if (!isNaN(fineAmount) && fineAmount > 0) {
-//           setFine(existingFine + fineAmount);
+//         const amount = parseFloat(enteredFine);
+//         if (!isNaN(amount) && amount > 0) {
+//           setFine(existingFine + amount);
 //           // Replace with your actual API endpoint
-//           await axios.post(`/api/add-damage-fine`, { userId, bookId, fineAmount, reason: "Damage" });
+//           await axios.post(`/api/add-damage-fine`, { userId, bookId, amount, reason: "Damage" });
 //         }
 //       } else {
 //         if (existingFine > 0) {
@@ -78,7 +78,7 @@
 //     if (confirmPayment) {
 //       try {
 //         // Replace with your actual API endpoint
-//         await axios.post(`/api/pay-fine`, { userId, fineAmount: fine });
+//         await axios.post(`/api/pay-fine`, { userId, amount: fine });
 //         setPopup({ message: "Fine paid successfully!", type: "success" });
 //         setIsFinePaid(true);
 //       } catch (error) {
@@ -254,25 +254,6 @@ const IssueReturn = () => {
     setIsFinePaid(false);
   };
 
-  // const handleIssueBook = async () => {
-  //   try {
-  //     const response = await axios.get(`http://localhost:8080/fines/unpaid/${userId}`);
-  //     const existingFine = response.data?.amount || 0; // Ensure valid data
-
-  //     console.log("Existing fine:", existingFine);
-
-  //     if (existingFine > 0) {
-  //       setFine(existingFine);
-  //       setPopup({ message: "Please pay the pending fine before issuing a new book.", type: "error" });
-  //     } else {
-  //       await axios.post("http://localhost:8080/issueBook/issue-books", { userId, bookId });
-  //       setPopup({ message: "Book issued successfully!", type: "success" });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error issuing book:", error);
-  //     setPopup({ message: "Failed to issue book.", type: "error" });
-  //   }
-  // };
 
   const handleIssueBook = async () => {
     try {
@@ -284,49 +265,98 @@ const IssueReturn = () => {
       if (existingFine > 0) {
         setFine(existingFine);
         setPopup({ message: `Please pay the pending fine of ₹${existingFine} before issuing a new book.`, type: "error" });
-      } else {
+      } else if(existingFine == 0) {
         await axios.post("http://localhost:8080/issueBook/issue-books", { userId, bookId });
+        alert("Book issued")
         setPopup({ message: "Book issued successfully!", type: "success" });
       }
     } catch (error) {
       console.error("Error issuing book:", error);
+
+      //if userid does not exist
+      if(error.response && error.response.status === 404){
+        // console.log(error.response)
+        alert(error.response.data.message);
+      }
+
+      //if bookid does not exist
+      if(error.response && error.response.status === 404){
+        // console.log(error.response)
+        alert(error.response.data.message);
+      }
+
+
       if (error.response && error.response.data && error.response.data.amount) {
-        const fineAmount = error.response.data.amount;
-        setFine(fineAmount);
-        setPopup({ message: `Please pay the pending fine of ₹${fineAmount} before issuing a new book.`, type: "error" });
+        const amount = error.response.data.amount;
+        setFine(amount);
+        setPopup({ message: `Please pay the pending fine of ₹${amount} before issuing a new book.`, type: "error" });
       } else {
         setPopup({ message: "Failed to issue book.", type: "error" });
       }
     }
   };
 
+
   const handleReturnBook = async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/check-fine/${userId}`);
-      const existingFine = response.data?.fineAmount || 0;
-
+      const response = await axios.get(`http://localhost:8080/fines/unpaid/${userId}`);
+      const existingFine = response.data?.amount || 0;
+      console.log("Existing fine:", existingFine);
+  
       if (isDamaged) {
-        const fineAmount = parseFloat(enteredFine);
-        if (!isNaN(fineAmount) && fineAmount > 0) {
-          setFine(existingFine + fineAmount);
-          await axios.post("http://localhost:8080/api/add-damage-fine", {
-            userId,
-            bookId,
-            fineAmount,
-            reason: "Damage",
+        const amount = parseFloat(enteredFine);
+        if (!isNaN(amount) && amount > 0) {
+          const finalFine = existingFine + amount;
+          console.log(finalFine);
+          setFine(finalFine);
+          setPopup({
+            message: `Total fine: ${finalFine}. Please pay before returning the book.`,
+            type: "warning",
           });
+
+          //send updated fine 
+          await axios.post("http://locaslhost:8080/fines/add-damage-fine", {
+            userId, 
+            bookId,
+            fine: finalFine,
+            reason: "Damage"
+          })
+
+        } else {
+          alert("Please enter a valid fine amount.");
         }
       } else {
         if (existingFine > 0) {
           setFine(existingFine);
+          setPopup({
+            message: `You have an unpaid fine of ${existingFine}. Please pay before returning the book.`,
+            type: "warning",
+          });
         } else {
-          await axios.post("http://localhost:8080/api/return-book", { userId, bookId });
+          await axios.post("http://localhost:8080/Book/return-book", {
+            bookId,
+            userId,
+            isDamaged: false,
+            fine: 0,
+            reasonForDamage: "",
+          });
+          alert("Book returned successfully!");
           setPopup({ message: "Book returned successfully!", type: "success" });
         }
       }
     } catch (error) {
-      console.error("Error returning book:", error);
-      setPopup({ message: "Failed to return book.", type: "error" });
+      if (error.response && error.response.status === 400) {
+        // Extract the error message from backend and display it
+        setPopup({ message: error.response.data.message || "You have unpaid fines. Please pay first.", type: "error" });
+        setFine(error.response.data.amount || 0); // Set the existing fine amount if available
+      } else {
+        console.error("Error returning book:", error);
+        if(error.response && error.response.status === 404){
+          // console.log(error.response.data.error)
+          alert("Record not found!")
+        }
+        setPopup({ message: "Failed to return book. Please try again later.", type: "error" });
+      }
     }
   };
 
@@ -334,7 +364,7 @@ const IssueReturn = () => {
     const confirmPayment = window.confirm("Have you paid the fine?");
     if (confirmPayment) {
       try {
-        await axios.post(`http://localhost:8080/fines/unpaid/pay-fine/${userId}/${bookId}`);
+        await axios.post(`http://localhost:8080/fines/unpaid/pay-fine/${userId}`);
         setPopup({ message: "Fine paid successfully!", type: "success" });
         setIsFinePaid(true);
         setFine(null); // Reset fine after payment

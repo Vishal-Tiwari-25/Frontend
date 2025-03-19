@@ -17,7 +17,11 @@ import { Search, User } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from 'axios'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUsers, faBookOpen, faBook } from '@fortawesome/free-solid-svg-icons';
 
+
+//fetching monthly data
 const months = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
 
 const fetchMonthlyData = async () => {
@@ -35,45 +39,18 @@ const fetchMonthlyData = async () => {
 };
 
 
-const genreData = [
-  { name: "Fiction", value: 400 },
-  { name: "Non-Fiction", value: 300 },
-  { name: "Sci-Fi", value: 200 },
-  { name: "Biography", value: 150 },
-];
 
-const returnVsIssued = [
-  { name: "Returned", value: 600 },
-  { name: "Issued", value: 400 },
-];
+//for  genre distribution pie chart
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6384', '#36A2EB'];
 
-const usersWithDeadlines = [
-  { name: "John Doe", book: "The Great Gatsby", deadline: "2025-03-14" },
-  { name: "Jane Smith", book: "1984", deadline: "2025-03-15" },
-  { name: "Alice Johnson", book: "To Kill a Mockingbird", deadline: "2025-03-14" },
-  { name: "Bob Brown", book: "Moby Dick", deadline: "2025-03-15" },
-  { name: "Emma Wilson", book: "War and Peace", deadline: "2025-03-14" },
-  { name: "Liam Martinez", book: "The Catcher in the Rye", deadline: "2025-03-15" },
-  { name: "Olivia Taylor", book: "Pride and Prejudice", deadline: "2025-03-14" },
-  { name: "Noah Anderson", book: "Ulysses", deadline: "2025-03-15" },
-];
-
-const COLORS = ["#0088FE", "#FFBB28", "#FF8042", "#00C49F"];
-
-// Get today's and tomorrow's date
-const today = new Date();
-const tomorrow = new Date();
-tomorrow.setDate(today.getDate() + 1);
-
-// Format the date to match the dataset format (YYYY-MM-DD)
-const formatDate = (date) => date.toISOString().split("T")[0];
-
-// Filter users with deadlines for today and tomorrow
-const filteredUsers = usersWithDeadlines.filter(user =>
-  user.deadline === formatDate(today) || user.deadline === formatDate(tomorrow)
-);
-
-
+const getRandomColor = () => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
 
 const Dashboard = () => {
 
@@ -85,6 +62,40 @@ const handleProfileClick = () => {
     navigate("/profile");
 }
 
+//for dashboard table
+
+const [dueBooks, setDueBooks] = useState([]);
+
+useEffect(() => {
+  const fetchDueBooks = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/dashboard/upcoming-due-books');
+      setDueBooks(response.data);
+    } catch (error) {
+      console.error('Error fetching due books:', error);
+    }
+  };
+
+  fetchDueBooks();
+}, []);
+
+
+//for stats
+  const [stats, setStats] = useState({ totalUsers: 0, totalIssuedBooks: 0, totalBooks: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/dashboard/stats');
+        setStats(response.data);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const [bookData, setBookData] = useState([]);
   useEffect(() => {
     const getData = async () => {
@@ -92,6 +103,27 @@ const handleProfileClick = () => {
       setBookData(data);
     };
     getData();
+  }, []);
+
+  //for fetching genre wise distribution
+  const [genreData, setGenreData] = useState([]);
+
+  const fetchGenreData = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/dashboard/genre-counts');
+      const data = response.data;
+      const transformedData = Object.keys(data).map((key) => ({
+        name: key,
+        value: data[key],
+      }));
+      setGenreData(transformedData);
+    } catch (error) {
+      console.error('Error fetching genre data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchGenreData();
   }, []);
 
   return (
@@ -118,17 +150,17 @@ const handleProfileClick = () => {
         <div className="grid grid-cols-3 gap-4">
           {/* Bar Chart (Books Borrowed) */}
           <div className="bg-white p-4 rounded-lg shadow-md col-span-2 h-[270px]">
-      <h2 className="text-md font-semibold mb-2">Books Borrowed (Last 12 Months)</h2>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={bookData}>
-          <XAxis dataKey="month" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="books" fill="#EB3678" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+            <h2 className="text-md font-semibold mb-2">Books Borrowed (Last 12 Months)</h2>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={bookData}>
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="books" fill="#EB3678" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
           {/* Genre Distribution Pie Chart */}
           <div className="bg-white p-4 rounded-lg shadow-md h-[250px]">
@@ -144,7 +176,7 @@ const handleProfileClick = () => {
                   dataKey="value"
                 >
                   {genreData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length] || getRandomColor()} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -152,60 +184,68 @@ const handleProfileClick = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* Returned vs Issued Books Pie Chart */}
-          <div className="bg-white p-4 rounded-lg shadow-md h-[250px]">
-            <h2 className="text-md font-semibold mb-2">Returned vs Issued Books</h2>
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie
-                  data={returnVsIssued}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={50}
-                  fill="#82ca9d"
-                  dataKey="value"
-                >
-                  {returnVsIssued.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+            <div className="bg-white p-6 rounded-xl shadow-lg h-[250px] flex justify-around items-center backdrop-blur-lg">
+                    
+            {/* Total Users */}
+            <div className="relative bg-white/20 p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center w-56 h-44 backdrop-blur-lg border border-white/30 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="bg-white/30 p-3 rounded-full shadow-md">
+                <FontAwesomeIcon icon={faUsers} className="text-2xl text-blue-500" />
+              </div>
+              <h3 className="text-md font-medium text-gray-700 mt-2">Total Users</h3>
+              <p className="text-3xl font-extrabold text-gray-900">{stats.totalUsers}</p>
+            </div>
 
-          {/* Scrollable Table for User Deadlines */}
-          <div className="bg-white p-4 rounded-lg shadow-md col-span-2 h-[270px]">
-            <h2 className="text-md font-semibold mb-2">Books Due Today & Tomorrow</h2>
-            <div className="overflow-x-auto overflow-y-auto max-h-[220px]">
-              <table className="w-full border-collapse">
-                <thead className="bg-gray-200 sticky top-0">
-                  <tr className="text-left">
-                    <th className="p-2 border">User Name</th>
-                    <th className="p-2 border">Book</th>
-                    <th className="p-2 border">Deadline</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((user, index) => (
-                      <tr key={index} className="border hover:bg-gray-100">
-                        <td className="p-2 border">{user.name}</td>
-                        <td className="p-2 border">{user.book}</td>
-                        <td className="p-2 border">{user.deadline}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="3" className="p-2 border text-center text-gray-500">
-                        No books due today or tomorrow.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            {/* Total Issued Books */}
+            <div className="relative bg-white/20 p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center w-56 h-44 backdrop-blur-lg border border-white/30 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="bg-white/30 p-3 rounded-full shadow-md">
+                <FontAwesomeIcon icon={faBookOpen} className="text-2xl text-green-500" />
+              </div>
+              <h3 className="text-md font-medium text-gray-700 mt-2">Total Issued Books</h3>
+              <p className="text-3xl font-extrabold text-gray-900">{stats.totalIssuedBooks}</p>
+            </div>
+
+            {/* Total Books */}
+            <div className="relative bg-white/20 p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center w-56 h-44 backdrop-blur-lg border border-white/30 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="bg-white/30 p-3 rounded-full shadow-md">
+                <FontAwesomeIcon icon={faBook} className="text-2xl text-yellow-500" />
+              </div>
+              <h3 className="text-md font-medium text-gray-700 mt-2">Total Books</h3>
+              <p className="text-3xl font-extrabold text-gray-900">{stats.totalBooks}</p>
             </div>
           </div>
+
+
+        <div className="bg-white p-4 rounded-lg shadow-md col-span-2 h-[270px]">
+          <h2 className="text-md font-semibold mb-2">Books Due</h2>
+          <div className="overflow-x-auto overflow-y-auto max-h-[220px]">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr className="text-left">
+                  <th className="p-2 border">User Name</th>
+                  <th className="p-2 border">Book</th>
+                  <th className="p-2 border">Deadline</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dueBooks.length > 0 ? (
+                  dueBooks.map((book, index) => (
+                    <tr key={index} className="border hover:bg-gray-100">
+                      <td className="p-2 border">{book.userName}</td>
+                      <td className="p-2 border">{book.bookTitle}</td>
+                      <td className="p-2 border">{new Date(book.dueDate).toLocaleString()}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="p-2 border text-center text-gray-500">
+                      No books due today or tomorrow.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         </div>
 

@@ -16,10 +16,14 @@ const ViewBook = () => {
 
   useEffect(() => {
     const fetchBooks = async () => {
-      console.log("Fetched books data:");
+      console.log("Started Fetching books data:");
+      console.log("Hello",localStorage);
+      const token = localStorage.getItem("token");
       try {
-        const response = await axios.get('http://localhost:8080/Book/get-books');
-        console.log("Fetched books data:", response.data);
+        const response = await axios.get('http://localhost:8080/Book/get-books', {
+          headers: {Authorization: `Bearer ${token}`}
+        });
+        console.log("Fetched books data:", response);
         setBooks(response.data);
       } catch (error) {
         console.error('Error fetching books:', error);
