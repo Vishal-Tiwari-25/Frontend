@@ -132,7 +132,7 @@ const AddBook = () => {
             </motion.button>
           </motion.form>
  
-          <SmileyAnimation />
+          {/* <SmileyAnimation /> */}
         </div>
       </div>
     </div>

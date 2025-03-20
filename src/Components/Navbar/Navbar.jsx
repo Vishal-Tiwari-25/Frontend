@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaHome, FaBook, FaUserPlus, FaUsers, FaClipboardList, FaExchangeAlt } from "react-icons/fa";
+import { FaBookOpenReader } from "react-icons/fa6";
 
 const Navbar = () => {
   return (
@@ -14,6 +15,7 @@ const Navbar = () => {
         <SidebarItem icon={<FaClipboardList />} text="View Books" route="/view-book" />
         <SidebarItem icon={<FaUsers />} text="View Users" route="/view-user" />
         <SidebarItem icon={<FaExchangeAlt />} text="Issue/Return Book" route="/issuereturn" />
+        <SidebarItem icon={<FaBookOpenReader />} text="Request Books" route="/request" />
       </nav>
     </div>
   );

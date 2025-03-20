@@ -153,7 +153,7 @@ useEffect(() => {
             <h2 className="text-md font-semibold mb-2">Books Borrowed (Last 12 Months)</h2>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={bookData}>
-                <XAxis dataKey="month" />
+                <XAxis dataKey="month" angle={-90} textAnchor="end" style={{fontSize: '8px'}}/>
                 <YAxis />
                 <Tooltip />
                 <Legend />
@@ -184,7 +184,7 @@ useEffect(() => {
             </ResponsiveContainer>
           </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-lg h-[250px] flex justify-around items-center backdrop-blur-lg">
+            <div className="bg-white p-2 rounded-xl shadow-lg h-[250px] flex justify-around items-center backdrop-blur-lg">
                     
             {/* Total Users */}
             <div className="relative bg-white/20 p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center w-56 h-44 backdrop-blur-lg border border-white/30 transition-all duration-300 hover:scale-105 hover:shadow-2xl">

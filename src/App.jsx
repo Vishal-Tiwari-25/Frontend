@@ -9,6 +9,7 @@ import AddBook from "./Components/Addbook/AddBook";
 import ViewBook from "./Components/Viewbook/ViewBook";
 import ViewUser from "./Components/Viewuser/ViewUser";
 import IssueReturnBook from "./Components/IssueReturn/IssueReturn";
+import Request from "./Components/RequestBook/Request";
 
 function App() {
 
@@ -25,6 +26,7 @@ function App() {
           <Route path="/view-book" element={<ViewBook/>}/>
           <Route path="/view-user" element={<ViewUser/>}/>
           <Route path="/issuereturn" element={<IssueReturnBook/>}/>
+          <Route path="/request" element={<Request/>}/>
         </Routes>
     </Router>
     </>

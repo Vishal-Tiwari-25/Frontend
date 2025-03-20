@@ -178,7 +178,7 @@ const AddUser = () => {
             transition={{ duration: 1 }}
             className="hidden md:block"
           >
-            <LibraryUnlockAnimation progress={progress} />
+            {/* <LibraryUnlockAnimation progress={progress} /> */}
           </motion.div>
         </div>
       </div>

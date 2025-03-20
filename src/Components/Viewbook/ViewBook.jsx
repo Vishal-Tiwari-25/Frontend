@@ -68,58 +68,14 @@ const ViewBook = () => {
   const handleUpdateQuantity = (bookId, newQuantity) => {
     setBooks(books.map(book => book.bookId === bookId ? { ...book, quantity: newQuantity } : book));
   };
+
  
   const handleClosePopup = () => {
     setIsPopupOpen(false);
     setSelectedBook(null);
   };
  
-  // Add the UpdateQuantityPopup component
-// const UpdateQuantityPopup = ({ isOpen, onClose, book, onUpdate }) => {
-//   const [quantity, setQuantity] = useState(book ? book.quantity : 0);
- 
-//   const handleQuantityChange = (e) => {
-//     setQuantity(e.target.value);
-//   };
- 
-//   const handleSubmit = async () => {
-//     console.log(typeof(quantity));
-//     try {
-//       const response = await axios.put(`http://localhost:8080/Book/update-book/update-quantity/${book.bookId}`, quantity);
-//       if (response.status === 200) {
-//         console.log('Quantity updated successfully');
-//         onUpdate(book.bookId,quantity);
-//       } else {
-//         console.error('Failed to update quantity');
-//       }
-//     }catch(error){
-//       console.log(error);
-//     }
-
-//     // onUpdate(book.bookId, quantity);
-//     onClose();
-//   };
- 
-//   if (!isOpen) return null;
-
-//   return (
-//     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-//       <div className="bg-white p-6 rounded-lg shadow-lg">
-//         <h3 className="text-lg font-semibold mb-4">Update Quantity</h3>
-//         <input
-//           type="number"
-//           value={quantity}
-//           onChange={handleQuantityChange}
-//           className="w-full p-2 border rounded mb-4"
-//         />
-//         <div className="flex justify-end space-x-2">
-//           <button onClick={handleSubmit} className="px-4 py-2 bg-blue-500 text-white rounded">Update</button>
-//           <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
+  
 
 const UpdateQuantityPopup = ({ isOpen, onClose, book, onUpdate }) => {
   const [quantity, setQuantity] = useState(book ? book.quantity : 0);
